@@ -95,6 +95,7 @@ class PluginGoalsReport extends CommonGLPI
             'name' => 'users_id[]', // Important for multiple selection
             'multiple' => true,
             'value' => $users_id,
+            'right' => 'all',
         ]);
         echo "</td>";
         echo "<td colspan='2'></td>";
