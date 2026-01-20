@@ -66,7 +66,8 @@ class PluginGoalsReport extends CommonGLPI
         global $CFG_GLPI;
 
         echo "<div class='center'>";
-        echo "<form method='post' action='" . $_SERVER['PHP_SELF'] . "'>";
+        echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php'>";
+        echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "'>";
         echo "<table class='tab_cadre_fixe'>";
         echo "<tr><th colspan='4'>" . __('Filter achievements', 'goals') . "</th></tr>";
 
@@ -82,9 +83,19 @@ class PluginGoalsReport extends CommonGLPI
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Group', 'goals') . "</td>";
+        echo "<td>" . __('Technician', 'goals') . "</td>";
         echo "<td>";
-        Group::dropdown(['name' => 'groups_id']);
+
+        $users_id = $_POST['users_id'] ?? [];
+        if (!is_array($users_id)) {
+            $users_id = (string) $users_id === '' ? [] : [$users_id];
+        }
+
+        User::dropdown([
+            'name' => 'users_id[]', // Important for multiple selection
+            'multiple' => true,
+            'value' => $users_id,
+        ]);
         echo "</td>";
         echo "<td colspan='2'></td>";
         echo "</tr>";
@@ -114,9 +125,14 @@ class PluginGoalsReport extends CommonGLPI
 
         $date_from = $post['date_from'] ?? date('Y-01-01');
         $date_to = $post['date_to'] ?? date('Y-m-d');
-        $groups_id = $post['groups_id'] ?? 0;
+        $users_id = $post['users_id'] ?? [];
 
-        $results = $this->fetchAchievements($date_from, $date_to, $groups_id);
+        $results = $this->fetchAchievements($date_from, $date_to, $users_id);
+
+        if (empty($results) || (count($results) === 1 && $results[0]['tecnico'] === 'TOTAL' && $results[0]['tareas_hechas'] == 0)) {
+            echo "<div class='center'><div class='warning box'><i class='fas fa-exclamation-triangle'></i> " . __('No results found for the selected criteria.', 'goals') . "</div></div>";
+            return;
+        }
 
         echo "<div class='center'>";
         echo "<table class='tab_cadre_fixehov'>";
@@ -129,67 +145,102 @@ class PluginGoalsReport extends CommonGLPI
             $style = ($row['tecnico'] === 'TOTAL') ? "style='font-weight:bold; background-color:#f0f0f0;'" : "";
             echo "<tr class='tab_bg_1' $style>";
             echo "<td>" . $row['tecnico'] . "</td>";
-            echo "<td>" . $row['tareas_hechas'] . "</td>";
+            echo "<td>" . ($row['tareas_hechas'] ?? 0) . "</td>";
             echo "</tr>";
         }
 
         echo "</table>";
-        echo "</div>";
+
+        // Debug SQL (only for super-admins or for this dev phase)
+        if (defined('GLPI_DEBUG_MODE') && GLPI_DEBUG_MODE) {
+            // We can reconstructed the query roughly or just note to check debug log
+            echo "<div class='center'><small>Check GLPI SQL Logs for specific QueryBuilder output</small></div>";
+        }
 
         echo "</div>";
     }
 
-    public function fetchAchievements($dateFrom, $dateTo, $groups_id)
+    /**
+     * Fetch achievements using the provided SQL logic
+     *
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @param int $users_id
+     * @return array
+     */
+    public function fetchAchievements($dateFrom, $dateTo, $users_id)
     {
         global $DB;
 
         $start = $dateFrom . " 00:00:00";
         $end = $dateTo . " 23:59:59";
 
-        $join_group = "";
-        $group_condition = "";
-        if ($groups_id > 0) {
-            $join_group = "JOIN glpi_groups_users gu ON gu.users_id = u.id";
-            $group_condition = "AND gu.groups_id = '$groups_id'";
+        $criteria = [
+            'SELECT' => [
+                'glpi_users.name AS tecnico',
+                new \Glpi\DBAL\QueryExpression('COUNT(*) AS tareas_hechas')
+            ],
+            'FROM' => 'glpi_tickettasks',
+            'INNER JOIN' => [
+                'glpi_users' => [
+                    'ON' => [
+                        'glpi_users' => 'id',
+                        'glpi_tickettasks' => 'users_id'
+                    ]
+                ],
+                'glpi_tickets' => [
+                    'ON' => [
+                        'glpi_tickets' => 'id',
+                        'glpi_tickettasks' => 'tickets_id'
+                    ]
+                ]
+            ],
+            'LEFT JOIN' => [
+                'glpi_itilcategories' => [
+                    'ON' => [
+                        'glpi_itilcategories' => 'id',
+                        'glpi_tickets' => 'itilcategories_id'
+                    ]
+                ]
+            ],
+            'WHERE' => [
+                'glpi_tickettasks.state' => 2,
+                ['glpi_tickettasks.date_mod' => ['>=', $start]],
+                ['glpi_tickettasks.date_mod' => ['<=', $end]]
+            ],
+            'GROUPBY' => 'glpi_users.name'
+        ];
+
+        // Add category filter separately
+        $criteria['WHERE'][] = [
+            'OR' => [
+                'glpi_itilcategories.name' => null,
+                ['glpi_itilcategories.name' => ['<>', 'Importados desde Track-It']]
+            ]
+        ];
+
+        if (!empty($users_id)) {
+            $criteria['WHERE']['glpi_tickettasks.users_id'] = $users_id;
         }
 
-        $query = "
-         SELECT
-            u.name AS tecnico,
-            COUNT(DISTINCT tt.id) AS tareas_hechas
-         FROM glpi_tickettasks tt
-         JOIN glpi_users u ON u.id = tt.users_id
-         $join_group
-         JOIN glpi_tickets t ON t.id = tt.tickets_id
-         LEFT JOIN glpi_itilcategories c ON c.id = t.itilcategories_id
-         WHERE tt.state = 2
-            $group_condition
-            AND tt.date_mod >= '$start'
-            AND tt.date_mod <= '$end'
-            AND (c.name IS NULL OR c.name <> 'Importados desde Track-It')
-         GROUP BY u.name
-         
-         UNION ALL
-         
-         SELECT
-            'TOTAL' AS tecnico,
-            COUNT(DISTINCT tt.id) AS tareas_hechas
-         FROM glpi_tickettasks tt
-         JOIN glpi_users u ON u.id = tt.users_id
-         $join_group
-         JOIN glpi_tickets t ON t.id = tt.tickets_id
-         LEFT JOIN glpi_itilcategories c ON c.id = t.itilcategories_id
-         WHERE tt.state = 2
-            $group_condition
-            AND tt.date_mod >= '$start'
-            AND tt.date_mod <= '$end'
-            AND (c.name IS NULL OR c.name <> 'Importados desde Track-It')
-      ";
-
-        $iterator = $DB->request($query);
+        $iterator = $DB->request($criteria);
         $results = [];
+        $total_tasks = 0;
+
         foreach ($iterator as $row) {
-            $results[] = $row;
+            $results[] = [
+                'tecnico' => $row['tecnico'],
+                'tareas_hechas' => $row['tareas_hechas']
+            ];
+            $total_tasks += (int) $row['tareas_hechas'];
+        }
+
+        // Add TOTAL row at the end
+        if (count($results) > 0) {
+            $results[] = [
+                'tecnico' => 'TOTAL',
+                'tareas_hechas' => $total_tasks
+            ];
         }
 
         return $results;

@@ -31,6 +31,8 @@
 
 include("../../../inc/includes.php");
 
+global $CFG_GLPI;
+
 // Security checks
 Session::checkLoginUser();
 // You can add more specific permission checks here
@@ -38,7 +40,7 @@ Session::checkLoginUser();
 
 Html::header(
     __('Goals', 'goals'),
-    $_SERVER['PHP_SELF'],
+    $CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php",
     "tools",
     "goals"
 );
