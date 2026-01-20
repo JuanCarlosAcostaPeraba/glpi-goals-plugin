@@ -1,0 +1,13 @@
+/* CSS for goals plugin */
+.spaced-container {
+    margin: 20px;
+}
+
+.center {
+    text-align: center;
+}
+
+/* Enhancing GLPI 11 aesthetics if needed */
+.tab_cadre_fixehov tr:hover td {
+    background-color: #f8f9fa;
+}

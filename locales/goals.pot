@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: goals\n"
+"POT-Creation-Date: 2026-01-19 13:20+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Juan Carlos Acosta Peraba\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: setup.php:57
+msgid "Goals"
+msgstr ""
+
+#: inc/report.class.php:36
+msgid "Goals Report"
+msgstr ""
+
+#: inc/report.class.php:50
+msgid "Filter achievements"
+msgstr ""
+
+#: inc/report.class.php:54
+msgid "Date from"
+msgstr ""
+
+#: inc/report.class.php:58
+msgid "Date to"
+msgstr ""
+
+#: inc/report.class.php:66
+msgid "Group"
+msgstr ""
+
+#: inc/report.class.php:107
+msgid "Technician"
+msgstr ""
+
+#: inc/report.class.php:108
+msgid "Tasks Done"
+msgstr ""
+
+#: inc/report.class.php:127
+msgid "Export to PDF"
+msgstr ""
+
+#: front/report.php:48
+msgid "HUC Goals - Informatics Department"
+msgstr ""
