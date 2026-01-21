@@ -94,10 +94,7 @@ class PluginGoalsReport extends CommonGLPI
         echo "<td>" . __('Technician', 'goals') . "</td>";
         echo "<td>";
 
-        $users_id = $_POST['users_id'] ?? [];
-        if (!is_array($users_id)) {
-            $users_id = (string) $users_id === '' ? [] : [$users_id];
-        }
+        $users_id = [];
 
         User::dropdown([
             'name' => 'users_id[]', // Important for multiple selection
