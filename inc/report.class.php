@@ -83,6 +83,14 @@ class PluginGoalsReport extends CommonGLPI
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Group') . "</td>";
+        echo "<td>";
+        Group::dropdown([
+            'name' => 'groups_id_helper',
+            'display_emptychoice' => true,
+            'on_change' => 'loadTechniciansFromGroup(this.value)'
+        ]);
+        echo "</td>";
         echo "<td>" . __('Technician', 'goals') . "</td>";
         echo "<td>";
 
@@ -96,9 +104,39 @@ class PluginGoalsReport extends CommonGLPI
             'multiple' => true,
             'value' => $users_id,
             'right' => 'all',
+            'rand' => 'users_id_field'
         ]);
+
+        $ajax_url = $CFG_GLPI['root_doc'] . "/plugins/goals/front/ajax_members.php";
+        echo Html::scriptBlock("
+            function loadTechniciansFromGroup(groupId) {
+                if (!groupId || groupId <= 0) return;
+                
+                fetch('$ajax_url?groups_id=' + groupId)
+                .then(response => response.json())
+                .then(users => {
+                    const selectElement = $('[name=\"users_id[]\"]');
+                    users.forEach(user => {
+                        // Check if already exists to avoid duplicates
+                        if (selectElement.find(\"option[value='\" + user.id + \"']\").length === 0) {
+                            const newOption = new Option(user.text, user.id, true, true);
+                            selectElement.append(newOption);
+                        } else {
+                            // Just ensure it's selected if it exists
+                            const existingOptions = selectElement.val() || [];
+                            if (!existingOptions.includes(user.id.toString())) {
+                                existingOptions.push(user.id.toString());
+                                selectElement.val(existingOptions);
+                            }
+                        }
+                    });
+                    selectElement.trigger('change');
+                })
+                .catch(error => console.error('Error fetching group members:', error));
+            }
+        ");
+
         echo "</td>";
-        echo "<td colspan='2'></td>";
         echo "</tr>";
 
         echo "<tr>";
