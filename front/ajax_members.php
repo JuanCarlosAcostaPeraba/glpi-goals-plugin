@@ -36,7 +36,7 @@ include("../../../inc/includes.php");
 header("Content-Type: application/json; charset=UTF-8");
 
 // Security check
-if (!Session::haveRight('config', READ)) {
+if (!Session::haveRight('ticket', READ)) {
     http_response_code(403);
     echo json_encode(['error' => 'Permission denied']);
     exit();

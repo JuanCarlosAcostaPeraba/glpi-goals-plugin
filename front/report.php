@@ -35,8 +35,9 @@ global $CFG_GLPI;
 
 // Security checks
 Session::checkLoginUser();
-// You can add more specific permission checks here
-// e.g., Session::checkRight('plugin_goals', READ);
+if (!PluginGoalsReport::canView()) {
+    Html::displayRightError();
+}
 
 Html::header(
     __('Goals', 'goals'),

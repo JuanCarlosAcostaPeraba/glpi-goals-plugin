@@ -39,7 +39,7 @@ class PluginGoalsReport extends CommonGLPI
 
     public static function canView(): bool
     {
-        return Session::haveRight('config', READ);
+        return Session::haveRight('ticket', READ);
     }
 
     public static function getMenuName()
