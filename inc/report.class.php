@@ -63,13 +63,43 @@ class PluginGoalsReport extends CommonGLPI
      */
     public function showFilterForm()
     {
-        global $CFG_GLPI;
+        global $CFG_GLPI, $DB;
 
         echo "<div class='center'>";
         echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php'>";
         echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "'>";
         echo "<table class='tab_cadre_fixe'>";
-        echo "<tr><th colspan='4'>" . __('Filter achievements', 'goals') . "</th></tr>";
+        echo "<tr>";
+        echo "<th colspan='3'>" . __('Filter achievements', 'goals') . "</th>";
+        echo "<th>";
+        if (self::canView()) {
+            echo "<a class='btn btn-sm btn-outline-secondary pointer' onclick=\"$('#plugin_goals_quick_config').toggle()\" title=\"" . __('Settings', 'goals') . "\">";
+            echo "<i class='fas fa-cog'></i>";
+            echo "</a>";
+        }
+        echo "</th>";
+        echo "</tr>";
+
+        if (self::canView()) {
+            // Fetch current configuration
+            $config = $DB->request([
+                'FROM' => 'glpi_plugin_goals_configs',
+                'WHERE' => ['id' => 1]
+            ])->current();
+
+            echo "<tr id='plugin_goals_quick_config' style='display:none;' class='tab_bg_2'>";
+            echo "<td colspan='4'>";
+            echo "<div class='center'>";
+            echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php'>";
+            echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "'>";
+            echo "<strong>" . __('Show technicians in results', 'goals') . " </strong>";
+            Dropdown::showYesNo('show_technicians', $config['show_technicians'] ?? 1);
+            echo "&nbsp;<input type='submit' name='update_config' value=\"" . _sx('button', 'Save') . "\" class='btn btn-primary btn-sm'>";
+            echo "</form>";
+            echo "</div>";
+            echo "</td>";
+            echo "</tr>";
+        }
 
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Date from', 'goals') . "</td>";

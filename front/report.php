@@ -48,6 +48,20 @@ Html::header(
 
 $report = new PluginGoalsReport();
 
+// Handle configuration update from this view
+if (isset($_POST['update_config'])) {
+    if (!PluginGoalsReport::canView()) {
+        Html::displayRightError();
+    }
+
+    PluginGoalsConfig::updateConfig([
+        'show_technicians' => $_POST['show_technicians']
+    ]);
+
+    Session::addMessageAfterRedirect(__('Configuration saved successfully', 'goals'), false, INFO);
+    Html::redirect($CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php");
+}
+
 echo "<div class='spaced-container'>";
 echo "<h1>" . __('HUC Goals - Informatics Department', 'goals') . "</h1>";
 
