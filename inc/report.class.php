@@ -85,10 +85,11 @@ class PluginGoalsReport extends CommonGLPI
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Group') . "</td>";
         echo "<td>";
+        echo "<input type='hidden' name='group_name_helper' id='group_name_helper' value=''>";
         Group::dropdown([
             'name' => 'groups_id_helper',
             'display_emptychoice' => true,
-            'on_change' => 'loadTechniciansFromGroup(this.value)'
+            'on_change' => 'loadTechniciansFromGroup(this)'
         ]);
         echo "</td>";
         echo "<td>" . __('Technician', 'goals') . "</td>";
@@ -106,7 +107,11 @@ class PluginGoalsReport extends CommonGLPI
 
         $ajax_url = $CFG_GLPI['root_doc'] . "/plugins/goals/front/ajax_members.php";
         echo Html::scriptBlock("
-            function loadTechniciansFromGroup(groupId) {
+            function loadTechniciansFromGroup(dropdown) {
+                const groupId = dropdown.value;
+                const groupName = dropdown.options[dropdown.selectedIndex].text;
+                document.getElementById('group_name_helper').value = groupName;
+
                 if (!groupId || groupId <= 0) return;
                 
                 fetch('$ajax_url?groups_id=' + groupId)
@@ -155,6 +160,8 @@ class PluginGoalsReport extends CommonGLPI
      */
     public function handleAndDisplay($post)
     {
+        global $DB;
+
         if (!isset($post['show_report'])) {
             return;
         }
@@ -162,6 +169,14 @@ class PluginGoalsReport extends CommonGLPI
         $date_from = $post['date_from'] ?? date('Y-01-01');
         $date_to = $post['date_to'] ?? date('Y-m-d');
         $users_id = $post['users_id'] ?? [];
+        $group_name = $post['group_name_helper'] ?? '';
+
+        // Fetch current configuration
+        $config = $DB->request([
+            'FROM' => 'glpi_plugin_goals_configs',
+            'WHERE' => ['id' => 1]
+        ])->current();
+        $show_technicians = $config['show_technicians'] ?? 1;
 
         $results = $this->fetchAchievements($date_from, $date_to, $users_id);
 
@@ -170,10 +185,25 @@ class PluginGoalsReport extends CommonGLPI
             return;
         }
 
+        // Aggregate results if technicians are hidden
+        if (!$show_technicians) {
+            $aggregated_tasks = 0;
+            foreach ($results as $row) {
+                if ($row['tecnico'] !== 'TOTAL') {
+                    $aggregated_tasks += (int) $row['tareas_hechas'];
+                }
+            }
+            $label = !empty($group_name) ? $group_name : __('Selected Technicians', 'goals');
+            $results = [
+                ['tecnico' => $label, 'tareas_hechas' => $aggregated_tasks],
+                ['tecnico' => 'TOTAL', 'tareas_hechas' => $aggregated_tasks]
+            ];
+        }
+
         echo "<div class='center'>";
         echo "<table class='tab_cadre_fixehov'>";
         echo "<tr>";
-        echo "<th>" . __('Technician', 'goals') . "</th>";
+        echo "<th>" . ($show_technicians ? __('Technician', 'goals') : __('Result', 'goals')) . "</th>";
         echo "<th>" . __('Tasks Done', 'goals') . "</th>";
         echo "</tr>";
 

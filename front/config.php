@@ -31,21 +31,30 @@
 
 include("../../../inc/includes.php");
 
-// Check if user has update permission on config
-Session::checkRight("config", UPDATE);
+$config = new PluginGoalsConfig();
 
-Html::header(
-    __('Goals', 'goals'),
-    $_SERVER['PHP_SELF'],
-    "config",
-    "goals"
-);
+// Update configuration if form submitted
+if (isset($_POST['update'])) {
+    Session::checkRight("config", UPDATE);
 
-// For now, just a placeholder as requested.
-// Professionals skeletons usually show something even if static.
-echo "<div class='center spaced-container'>";
-echo "<h2>" . __('Goals Configuration', 'goals') . "</h2>";
-echo "<p>" . __('No special configuration is required for this plugin yet.', 'goals') . "</p>";
-echo "</div>";
+    $updated = PluginGoalsConfig::updateConfig([
+        'show_technicians' => $_POST['show_technicians']
+    ]);
 
-Html::footer();
+    Session::addMessageAfterRedirect(__('Configuration saved successfully', 'goals'), false, INFO);
+    Html::back();
+} else {
+    // Check permissions for display
+    Session::checkRight("config", UPDATE);
+
+    Html::header(
+        __('Goals', 'goals'),
+        $_SERVER['PHP_SELF'],
+        "config",
+        "goals"
+    );
+
+    $config->showConfigForm();
+
+    Html::footer();
+}

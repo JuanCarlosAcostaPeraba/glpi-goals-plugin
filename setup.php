@@ -44,6 +44,7 @@ function plugin_init_goals()
 
    if (Plugin::isPluginActive('goals')) {
       Plugin::registerClass('PluginGoalsReport');
+      Plugin::registerClass('PluginGoalsConfig');
 
       $PLUGIN_HOOKS['config_page']['goals'] = 'front/config.php';
 

@@ -36,7 +36,23 @@
  */
 function plugin_goals_install()
 {
-    // Currently no tables to create
+    global $DB;
+
+    // Create configuration table
+    if (!$DB->tableExists('glpi_plugin_goals_configs')) {
+        $query = "CREATE TABLE `glpi_plugin_goals_configs` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `show_technicians` TINYINT(1) NOT NULL DEFAULT 1,
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+        $DB->doQuery($query);
+
+        // Insert default configuration
+        $DB->insert('glpi_plugin_goals_configs', [
+            'show_technicians' => 1
+        ]);
+    }
+
     return true;
 }
 
@@ -47,6 +63,10 @@ function plugin_goals_install()
  */
 function plugin_goals_uninstall()
 {
-    // Currently no tables to drop
+    global $DB;
+
+    // Drop configuration table
+    $DB->dropTable('glpi_plugin_goals_configs');
+
     return true;
 }
