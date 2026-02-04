@@ -113,11 +113,25 @@ class PluginGoalsReport extends CommonGLPI
         echo "<td>Grupo</td>";
         echo "<td>";
         echo "<input type='hidden' name='group_name_helper' id='group_name_helper' value=''>";
-        Group::dropdown([
-            'name' => 'groups_id_helper',
+
+        // Manual fetch to ensure strict entity isolation (no parent/recursive groups)
+        $groups = $DB->request([
+            'SELECT' => ['id', 'name'],
+            'FROM' => 'glpi_groups',
+            'WHERE' => ['entities_id' => $_SESSION['glpiactive_entity']],
+            'ORDER' => 'name'
+        ]);
+
+        $choices = [];
+        foreach ($groups as $data) {
+            $choices[$data['id']] = $data['name'];
+        }
+
+        Dropdown::showFromArray('strict_groups_id', $choices, [
             'display_emptychoice' => true,
             'on_change' => 'loadTechniciansFromGroup(this)',
-            'entity' => $_SESSION['glpiactiveentities']
+            'width' => '100%',
+            'no_ajax' => true // Force no AJAX for strictly controlled list
         ]);
         echo "</td>";
         echo "<td>Técnico</td>";
