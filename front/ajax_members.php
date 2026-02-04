@@ -60,10 +60,17 @@ $iterator = $DB->request([
                 'glpi_groups_users' => 'users_id',
                 'glpi_users' => 'id'
             ]
+        ],
+        'glpi_groups' => [
+            'ON' => [
+                'glpi_groups' => 'id',
+                'glpi_groups_users' => 'groups_id'
+            ]
         ]
     ],
     'WHERE' => [
-        'glpi_groups_users.groups_id' => $groups_id
+        'glpi_groups_users.groups_id' => $groups_id,
+        'glpi_groups.entities_id' => $_SESSION['glpiactiveentities']
     ],
     'ORDER' => 'glpi_users.name'
 ]);

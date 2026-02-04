@@ -4,7 +4,7 @@ class PluginGoalsConfig extends CommonDBTM
 {
     public static function getTypeName($nb = 0)
     {
-        return __('Goals Configuration', 'goals');
+        return 'Configuración de Logros';
     }
 
     public function showConfigForm()
@@ -20,10 +20,10 @@ class PluginGoalsConfig extends CommonDBTM
         echo "<form method='post' action='config.php'>";
         echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "'>";
         echo "<table class='tab_cadre_fixe'>";
-        echo "<tr><th colspan='2'>" . __('Settings', 'goals') . "</th></tr>";
+        echo "<tr><th colspan='2'>Ajustes</th></tr>";
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Show technicians in results', 'goals') . "</td>";
+        echo "<td>Mostrar técnicos en los resultados</td>";
         echo "<td>";
         Dropdown::showYesNo('show_technicians', $config['show_technicians'] ?? 1);
         echo "</td>";
@@ -31,7 +31,7 @@ class PluginGoalsConfig extends CommonDBTM
 
         echo "<tr>";
         echo "<td colspan='2' class='center'>";
-        echo "<input type='submit' name='update' value=\"" . _sx('button', 'Save') . "\" class='btn btn-primary'>";
+        echo "<input type='submit' name='update' value='Guardar' class='btn btn-primary'>";
         echo "</td>";
         echo "</tr>";
 

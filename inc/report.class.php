@@ -34,7 +34,7 @@ class PluginGoalsReport extends CommonGLPI
 
     public static function getTypeName($nb = 0)
     {
-        return __('Goals Report', 'goals');
+        return 'Informe de Logros';
     }
 
     public static function canView(): bool
@@ -44,7 +44,7 @@ class PluginGoalsReport extends CommonGLPI
 
     public static function getMenuName()
     {
-        return __('Goals', 'goals');
+        return 'Logros';
     }
 
     public static function getMenuContent()
@@ -70,10 +70,10 @@ class PluginGoalsReport extends CommonGLPI
         echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "'>";
         echo "<table class='tab_cadre_fixe'>";
         echo "<tr>";
-        echo "<th colspan='3'>" . __('Filter achievements', 'goals') . "</th>";
+        echo "<th colspan='3'>Filtrar logros</th>";
         echo "<th>";
         if (self::canView()) {
-            echo "<a class='btn btn-sm btn-outline-secondary pointer' onclick=\"$('#plugin_goals_quick_config').toggle()\" title=\"" . __('Settings', 'goals') . "\">";
+            echo "<a class='btn btn-sm btn-outline-secondary pointer' onclick=\"$('#plugin_goals_quick_config').toggle()\" title=\"Ajustes\">";
             echo "<i class='fas fa-cog'></i>";
             echo "</a>";
         }
@@ -90,39 +90,37 @@ class PluginGoalsReport extends CommonGLPI
             echo "<tr id='plugin_goals_quick_config' style='display:none;' class='tab_bg_2'>";
             echo "<td colspan='4'>";
             echo "<div class='center'>";
-            echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php'>";
-            echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "'>";
-            echo "<strong>" . __('Show technicians in results', 'goals') . " </strong>";
+            echo "<strong>Mostrar técnicos en los resultados </strong>";
             Dropdown::showYesNo('show_technicians', $config['show_technicians'] ?? 1);
-            echo "&nbsp;<input type='submit' name='update_config' value=\"" . _sx('button', 'Save') . "\" class='btn btn-primary btn-sm'>";
-            echo "</form>";
+            echo "&nbsp;<input type='submit' name='update_config' value='Guardar' class='btn btn-primary btn-sm'>";
             echo "</div>";
             echo "</td>";
             echo "</tr>";
         }
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Date from', 'goals') . "</td>";
+        echo "<td>Fecha desde</td>";
         echo "<td>";
         Html::showDateField('date_from', ['value' => date('Y-01-01')]);
         echo "</td>";
-        echo "<td>" . __('Date to', 'goals') . "</td>";
+        echo "<td>Fecha hasta</td>";
         echo "<td>";
         Html::showDateField('date_to', ['value' => date('Y-m-d')]);
         echo "</td>";
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Group') . "</td>";
+        echo "<td>Grupo</td>";
         echo "<td>";
         echo "<input type='hidden' name='group_name_helper' id='group_name_helper' value=''>";
         Group::dropdown([
             'name' => 'groups_id_helper',
             'display_emptychoice' => true,
-            'on_change' => 'loadTechniciansFromGroup(this)'
+            'on_change' => 'loadTechniciansFromGroup(this)',
+            'entity' => $_SESSION['glpiactiveentities']
         ]);
         echo "</td>";
-        echo "<td>" . __('Technician', 'goals') . "</td>";
+        echo "<td>Técnico</td>";
         echo "<td>";
 
         $users_id = [];
@@ -173,7 +171,7 @@ class PluginGoalsReport extends CommonGLPI
 
         echo "<tr>";
         echo "<td colspan='4' class='center'>";
-        echo "<input type='submit' name='show_report' value=\"" . _sx('button', 'Show') . "\" class='btn btn-primary'>";
+        echo "<input type='submit' name='show_report' value='Mostrar' class='btn btn-primary'>";
         echo "</td>";
         echo "</tr>";
 
@@ -211,7 +209,7 @@ class PluginGoalsReport extends CommonGLPI
         $results = $this->fetchAchievements($date_from, $date_to, $users_id);
 
         if (empty($results) || (count($results) === 1 && $results[0]['tecnico'] === 'TOTAL' && $results[0]['tareas_hechas'] == 0)) {
-            echo "<div class='center'><div class='warning box'><i class='fas fa-exclamation-triangle'></i> " . __('No results found for the selected criteria.', 'goals') . "</div></div>";
+            echo "<div class='center'><div class='warning box'><i class='fas fa-exclamation-triangle'></i> No se encontraron resultados para los criterios seleccionados.</div></div>";
             return;
         }
 
@@ -223,7 +221,7 @@ class PluginGoalsReport extends CommonGLPI
                     $aggregated_tasks += (int) $row['tareas_hechas'];
                 }
             }
-            $label = !empty($group_name) ? $group_name : __('Selected Technicians', 'goals');
+            $label = !empty($group_name) ? $group_name : 'Técnicos Seleccionados';
             $results = [
                 ['tecnico' => $label, 'tareas_hechas' => $aggregated_tasks],
                 ['tecnico' => 'TOTAL', 'tareas_hechas' => $aggregated_tasks]
@@ -233,8 +231,8 @@ class PluginGoalsReport extends CommonGLPI
         echo "<div class='center'>";
         echo "<table class='tab_cadre_fixehov'>";
         echo "<tr>";
-        echo "<th>" . ($show_technicians ? __('Technician', 'goals') : __('Result', 'goals')) . "</th>";
-        echo "<th>" . __('Tasks Done', 'goals') . "</th>";
+        echo "<th>" . ($show_technicians ? 'Técnico' : 'Resultado') . "</th>";
+        echo "<th>Tareas Realizadas</th>";
         echo "</tr>";
 
         foreach ($results as $row) {
@@ -318,6 +316,9 @@ class PluginGoalsReport extends CommonGLPI
         if (!empty($users_id)) {
             $criteria['WHERE']['glpi_tickettasks.users_id'] = $users_id;
         }
+
+        // Restrict by authorized entities - Tickets are NOT recursive items
+        $criteria['WHERE'][] = getEntitiesRestrictCriteria('glpi_tickets', '', $_SESSION['glpiactiveentities'], false);
 
         $iterator = $DB->request($criteria);
         $results = [];

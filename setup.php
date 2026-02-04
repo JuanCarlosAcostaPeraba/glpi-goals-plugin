@@ -101,8 +101,8 @@ function plugin_goals_check_config($verbose = false)
    if (true) { // No special configuration required yet
       return true;
    }
-   if ($verbose && function_exists('__')) {
-      echo __('Installed / not configured', 'goals');
+   if ($verbose) {
+      echo 'Instalado / no configurado';
    }
    return false;
 }

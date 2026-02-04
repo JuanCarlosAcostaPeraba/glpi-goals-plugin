@@ -41,14 +41,14 @@ if (isset($_POST['update'])) {
         'show_technicians' => $_POST['show_technicians']
     ]);
 
-    Session::addMessageAfterRedirect(__('Configuration saved successfully', 'goals'), false, INFO);
+    Session::addMessageAfterRedirect('Configuración guardada exitosamente', false, INFO);
     Html::back();
 } else {
     // Check permissions for display
     Session::checkRight("config", UPDATE);
 
     Html::header(
-        __('Goals', 'goals'),
+        'Logros',
         $_SERVER['PHP_SELF'],
         "config",
         "goals"

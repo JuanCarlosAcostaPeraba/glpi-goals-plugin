@@ -40,7 +40,7 @@ if (!PluginGoalsReport::canView()) {
 }
 
 Html::header(
-    __('Goals', 'goals'),
+    'Logros',
     $CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php",
     "tools",
     "goals"
@@ -58,12 +58,12 @@ if (isset($_POST['update_config'])) {
         'show_technicians' => $_POST['show_technicians']
     ]);
 
-    Session::addMessageAfterRedirect(__('Configuration saved successfully', 'goals'), false, INFO);
+    Session::addMessageAfterRedirect('Configuración guardada exitosamente', false, INFO);
     Html::redirect($CFG_GLPI['root_doc'] . "/plugins/goals/front/report.php");
 }
 
 echo "<div class='spaced-container'>";
-echo "<h1>" . __('HUC Goals - Informatics Department', 'goals') . "</h1>";
+echo "<h1>Logros HUC - Departamento de Informática</h1>";
 
 $report->showFilterForm();
 
